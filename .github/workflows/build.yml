@@ -34,7 +34,7 @@ jobs:
 
     - name: Add Android platform
       run: |
-        npx cap add android --yes || true
+        echo y | npx cap add android
         npx cap sync android
 
     - name: Build APK
