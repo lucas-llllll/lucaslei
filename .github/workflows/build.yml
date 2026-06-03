@@ -42,7 +42,9 @@ jobs:
 
     - name: Add Android platform
       run: |
-        npx cap add android
+        if [ ! -d "android" ]; then
+          npx cap add android --no-interactive
+        fi
         npx cap sync android
 
     - name: Build APK
