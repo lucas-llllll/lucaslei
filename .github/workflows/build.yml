@@ -40,11 +40,8 @@ jobs:
         yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
         $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-33" "build-tools;33.0.2" || true
 
-    - name: Add Android platform
+    - name: Sync Android platform
       run: |
-        if [ ! -d "android" ]; then
-          yes | npx cap add android
-        fi
         npx cap sync android
 
     - name: Build APK
