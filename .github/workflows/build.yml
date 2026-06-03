@@ -41,7 +41,7 @@ jobs:
 
     - name: Sync Android platform
       run: |
-        cd android && npx cap sync android
+        npx cap sync android
 
     - name: Build APK
       run: |
