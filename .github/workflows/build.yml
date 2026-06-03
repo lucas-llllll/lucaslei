@@ -20,8 +20,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        npm install -D typescript
-        npm install @capacitor/core @capacitor/cli
+        npm install
         npm run build
 
     - name: Setup Java
