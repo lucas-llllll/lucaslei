@@ -13,21 +13,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22'
-
-    - name: Install dependencies
-      run: |
-        npm install
-        npm run build
-
     - name: Setup Java
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: '21'
+        java-version: '17'
 
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
@@ -38,10 +28,6 @@ jobs:
       run: |
         yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
         $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" "build-tools;36.0.0" || true
-
-    - name: Sync Android platform
-      run: |
-        npx cap sync android
 
     - name: Build APK
       run: |
@@ -59,10 +45,10 @@ jobs:
       if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: v${{ github.run_number }}
+        tag: v${{ github.run_number }}
         name: Build ${{ github.run_number }}
         files: android/app/build/outputs/apk/debug/app-debug.apk
         draft: false
-        prerelease: true
+        prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
