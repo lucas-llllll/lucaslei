@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.lucaslei.app.MainViewModel
 import com.lucaslei.app.Recipe
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecipesScreen(vm: MainViewModel) {
     val recipes by vm.recipes.collectAsState()
