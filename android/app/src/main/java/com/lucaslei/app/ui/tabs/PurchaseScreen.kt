@@ -27,7 +27,7 @@ fun PurchaseScreen(vm: MainViewModel) {
             Card(modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp).fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                 Row(modifier = Modifier.padding(12.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text("进度: $boughtCount/${purchases.size}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-                    LinearProgressIndicator(progress = { boughtCount.toFloat() / purchases.size }, modifier = Modifier.width(100.dp), color = MaterialTheme.colorScheme.primary, trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                    LinearProgressIndicator(progress = boughtCount.toFloat() / purchases.size, modifier = Modifier.width(100.dp), color = MaterialTheme.colorScheme.primary, trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
                 }
             }
         }
