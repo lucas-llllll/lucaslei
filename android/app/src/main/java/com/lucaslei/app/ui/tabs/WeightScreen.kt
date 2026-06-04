@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.lucaslei.app.MainViewModel
 import com.lucaslei.app.WeightRecord
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeightScreen(vm: MainViewModel) {
     val weights by vm.weights.collectAsState()
