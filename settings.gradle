@@ -1,3 +1,2 @@
 rootProject.name = 'Lucaslei'
-include ':android'
-project(':android').projectDir = new File('android')
+include ':android:app'
