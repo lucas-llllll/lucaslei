@@ -31,9 +31,8 @@ jobs:
 
     - name: Build APK
       run: |
-        cd android
-        chmod +x gradlew
-        ./gradlew :app:assembleDebug --no-daemon
+        chmod +x android/gradlew
+        ./gradlew :android:app:assembleDebug --no-daemon
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
