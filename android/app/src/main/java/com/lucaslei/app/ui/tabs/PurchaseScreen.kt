@@ -12,6 +12,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.lucaslei.app.MainViewModel
 import com.lucaslei.app.PurchaseItem
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PurchaseScreen(vm: MainViewModel) {
     val purchases by vm.purchases.collectAsState()
