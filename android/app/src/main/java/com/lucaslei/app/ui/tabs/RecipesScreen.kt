@@ -45,7 +45,7 @@ fun RecipesScreen(vm: MainViewModel) {
     }
     showDetail?.let { recipe ->
         AlertDialog(onDismissRequest = { showDetail = null }, title = { Text(recipe.name) },
-            text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { if (recipe.category.isNotBlank()) Text("分类: ${recipe.category}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary); if (recipe.ingredients.isNotBlank()) { HorizontalDivider(); Text("食材", style = MaterialTheme.typography.titleSmall); Text(recipe.ingredients, style = MaterialTheme.typography.bodyMedium) }; if (recipe.steps.isNotBlank()) { HorizontalDivider(); Text("步骤", style = MaterialTheme.typography.titleSmall); Text(recipe.steps, style = MaterialTheme.typography.bodyMedium) } } },
+            text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { if (recipe.category.isNotBlank()) Text("分类: ${recipe.category}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary); if (recipe.ingredients.isNotBlank()) { Divider(); Text("食材", style = MaterialTheme.typography.titleSmall); Text(recipe.ingredients, style = MaterialTheme.typography.bodyMedium) }; if (recipe.steps.isNotBlank()) { Divider(); Text("步骤", style = MaterialTheme.typography.titleSmall); Text(recipe.steps, style = MaterialTheme.typography.bodyMedium) } } },
             confirmButton = { TextButton(onClick = { showDetail = null }) { Text("关闭") } })
     }
 }
