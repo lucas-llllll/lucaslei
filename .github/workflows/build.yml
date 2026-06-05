@@ -40,15 +40,3 @@ jobs:
       with:
         name: lucaslei-app-debug
         path: android/app/build/outputs/apk/debug/app-debug.apk
-
-    - name: Create Release
-      if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-      uses: softprops/action-gh-release@v1
-      with:
-        tag: v${{ github.run_number }}
-        name: Build ${{ github.run_number }}
-        files: android/app/build/outputs/apk/debug/app-debug.apk
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
