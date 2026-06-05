@@ -28,7 +28,7 @@ object ApiClient {
     suspend fun get(path: String): String = withContext(Dispatchers.IO) {
         try {
             withTimeout(12000) {
-                val req = Request.Builder().url("$BASE_URL$path").get().build()
+                val req = Request.Builder().url("$BASE_URL$path").addHeader("Authorization", "Bearer lucaslei").get().build()
                 client.newCall(req).execute().use { resp ->
                     if (!resp.isSuccessful) throw Exception("HTTP ${resp.code}")
                     resp.body?.string() ?: ""
@@ -52,7 +52,7 @@ object ApiClient {
             withTimeout(12000) {
                 val json = gson.toJson(body)
                 val reqBody = json.toRequestBody(JSON)
-                val req = Request.Builder().url("$BASE_URL$path").put(reqBody).build()
+                val req = Request.Builder().url("$BASE_URL$path").addHeader("Authorization", "Bearer lucaslei").put(reqBody).build()
                 client.newCall(req).execute().use { resp ->
                     if (!resp.isSuccessful) throw Exception("HTTP ${resp.code}")
                     resp.body?.string() ?: ""
