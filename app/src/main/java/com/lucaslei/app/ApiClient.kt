@@ -22,7 +22,7 @@ object ApiClient {
     private fun url(path: String) = "$BASE_URL$path"
 
     suspend fun get(path: String): String = withContext(Dispatchers.IO) {
-        val req = Request.Builder().url(url(path)).get().build()
+        val req = Request.Builder().url(url(path)).addHeader("Authorization", "Bearer lucaslei").get().build()
         client.newCall(req).execute().use { resp ->
             if (!resp.isSuccessful) throw Exception("HTTP ${resp.code}")
             resp.body?.string() ?: ""
@@ -32,7 +32,7 @@ object ApiClient {
     suspend fun post(path: String, body: Any): String = withContext(Dispatchers.IO) {
         val json = gson.toJson(body)
         val reqBody = json.toRequestBody(JSON)
-        val req = Request.Builder().url(url(path)).post(reqBody).build()
+        val req = Request.Builder().url(url(path)).addHeader("Authorization", "Bearer lucaslei").post(reqBody).build()
         client.newCall(req).execute().use { resp ->
             if (!resp.isSuccessful) throw Exception("HTTP ${resp.code}")
             resp.body?.string() ?: ""
@@ -42,7 +42,7 @@ object ApiClient {
     suspend fun put(path: String, body: Any): String = withContext(Dispatchers.IO) {
         val json = gson.toJson(body)
         val reqBody = json.toRequestBody(JSON)
-        val req = Request.Builder().url(url(path)).put(reqBody).build()
+        val req = Request.Builder().url(url(path)).addHeader("Authorization", "Bearer lucaslei").put(reqBody).build()
         client.newCall(req).execute().use { resp ->
             if (!resp.isSuccessful) throw Exception("HTTP ${resp.code}")
             resp.body?.string() ?: ""
@@ -50,7 +50,7 @@ object ApiClient {
     }
 
     suspend fun delete(path: String): String = withContext(Dispatchers.IO) {
-        val req = Request.Builder().url(url(path)).delete().build()
+        val req = Request.Builder().url(url(path)).addHeader("Authorization", "Bearer lucaslei").delete().build()
         client.newCall(req).execute().use { resp ->
             if (!resp.isSuccessful) throw Exception("HTTP ${resp.code}")
             resp.body?.string() ?: ""
