@@ -38,7 +38,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun loadAll() {
+    fun loadAll() {
         _todos.value = dataStore.loadTodos()
         _recipes.value = dataStore.loadRecipes()
         _purchases.value = dataStore.loadPurchases()
@@ -130,24 +130,43 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // === Cloud Sync ===
     fun syncFromCloud() {
         viewModelScope.launch {
-            cloudSync.syncAll { progress ->
-                _syncProgress.value = progress
+            try {
+                val (mergedTodos, mergedPurchases, mergedWeights) = cloudSync.syncAll(
+                    localTodos = _todos.value,
+                    localPurchases = _purchases.value,
+                    localWeights = _weights.value
+                ) { progress ->
+                    _syncProgress.value = progress
+                }
+                _todos.value = mergedTodos
+                dataStore.saveTodos(mergedTodos)
+                _purchases.value = mergedPurchases
+                dataStore.savePurchases(mergedPurchases)
+                _weights.value = mergedWeights
+                dataStore.saveWeights(mergedWeights)
+            } catch (e: Exception) {
+                _syncStatus.value = "err" to "同步失败: ${e.message}"
+            } finally {
+                _syncProgress.value = ""
             }
-            loadAll()
-            _syncProgress.value = ""
         }
     }
 
     fun uploadToCloud() {
         viewModelScope.launch {
-            cloudSync.uploadAll(
-                todos = _todos.value,
-                purchases = _purchases.value,
-                weights = _weights.value
-            ) { progress ->
-                _syncProgress.value = progress
+            try {
+                cloudSync.uploadAll(
+                    todos = _todos.value,
+                    purchases = _purchases.value,
+                    weights = _weights.value
+                ) { progress ->
+                    _syncProgress.value = progress
+                }
+            } catch (e: Exception) {
+                _syncStatus.value = "err" to "上传失败: ${e.message}"
+            } finally {
+                _syncProgress.value = ""
             }
-            _syncProgress.value = ""
         }
     }
 }
