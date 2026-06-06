@@ -85,11 +85,14 @@ class CloudSync(private val dataStore: DataStore) {
     }
 
     // === Todo sync ===
-    suspend fun loadTodos(): Boolean {
+    suspend fun loadTodos(): List<TodoItem> {
         return try {
             notify("loading", "加载中")
             val json = ApiClient.get("/data/tododata")
             Log.d("CloudSync", "Todo response: ${json.take(200)}")
+            if (json.isBlank() || json == "{}") {
+                return emptyList()
+            }
             val type = object : TypeToken<Map<String, CategoryData>>() {}.type
             val data: Map<String, CategoryData> = gson.fromJson(json, type)
             val todos = mutableListOf<TodoItem>()
@@ -98,24 +101,31 @@ class CloudSync(private val dataStore: DataStore) {
                 catData.note?.forEach { todos.add(TodoItem(text = it.text, done = it.done)) }
                 catData.comm?.forEach { todos.add(TodoItem(text = it.text, done = it.done)) }
             }
-            dataStore.saveTodos(todos)
             notify("ok", "已同步 ${todos.size} 条")
-            true
+            todos
         } catch (e: JsonSyntaxException) {
             Log.e("CloudSync", "Todo parse error", e)
             notify("err", "数据格式错误")
-            false
+            emptyList()
         } catch (e: Exception) {
             Log.e("CloudSync", "Todo load error: ${e.message}", e)
             notify("err", "离线")
-            false
+            emptyList()
         }
     }
 
     suspend fun saveTodos(todos: List<TodoItem>): Boolean {
         return try {
             notify("saving", "保存中")
-            val data = mapOf<String, Any>()
+            // 按 done 状态分组: todo=未完成, note=已完成
+            val unfinished = todos.filter { !it.done }
+            val finished = todos.filter { it.done }
+            val data = mapOf(
+                "default" to CategoryData(
+                    todo = if (unfinished.isNotEmpty()) unfinished else null,
+                    note = if (finished.isNotEmpty()) finished.map { NoteItem(text = it.text, done = true) } else null
+                )
+            )
             ApiClient.put("/data/tododata", data)
             notify("ok", "已同步")
             true
@@ -127,24 +137,26 @@ class CloudSync(private val dataStore: DataStore) {
     }
 
     // === Purchase sync ===
-    suspend fun loadPurchases(): Boolean {
+    suspend fun loadPurchases(): List<PurchaseItem> {
         return try {
             notify("loading", "加载中")
             val json = ApiClient.get("/data/purchase")
             Log.d("CloudSync", "Purchase response: ${json.take(200)}")
+            if (json.isBlank() || json == "[]") {
+                return emptyList()
+            }
             val type = object : TypeToken<List<PurchaseItem>>() {}.type
             val list: List<PurchaseItem> = gson.fromJson(json, type)
-            dataStore.savePurchases(list)
             notify("ok", "已同步 ${list.size} 条")
-            true
+            list
         } catch (e: JsonSyntaxException) {
             Log.e("CloudSync", "Purchase parse error", e)
             notify("err", "数据格式错误")
-            false
+            emptyList()
         } catch (e: Exception) {
             Log.e("CloudSync", "Purchase load error: ${e.message}", e)
             notify("err", "离线")
-            false
+            emptyList()
         }
     }
 
@@ -162,24 +174,26 @@ class CloudSync(private val dataStore: DataStore) {
     }
 
     // === Weight sync ===
-    suspend fun loadWeights(): Boolean {
+    suspend fun loadWeights(): List<WeightRecord> {
         return try {
             notify("loading", "加载中")
             val json = ApiClient.get("/data/weight")
             Log.d("CloudSync", "Weight response: ${json.take(200)}")
+            if (json.isBlank() || json == "[]") {
+                return emptyList()
+            }
             val type = object : TypeToken<List<WeightRecord>>() {}.type
             val list: List<WeightRecord> = gson.fromJson(json, type)
-            dataStore.saveWeights(list)
             notify("ok", "已同步 ${list.size} 条")
-            true
+            list
         } catch (e: JsonSyntaxException) {
             Log.e("CloudSync", "Weight parse error", e)
             notify("err", "数据格式错误")
-            false
+            emptyList()
         } catch (e: Exception) {
             Log.e("CloudSync", "Weight load error: ${e.message}", e)
             notify("err", "离线")
-            false
+            emptyList()
         }
     }
 
@@ -196,15 +210,66 @@ class CloudSync(private val dataStore: DataStore) {
         }
     }
 
-    // Sync all
-    suspend fun syncAll(onProgress: (String) -> Unit = {}) {
-        onProgress("正在同步待办...")
-        loadTodos()
-        onProgress("正在同步采购...")
-        loadPurchases()
-        onProgress("正在同步体重...")
-        loadWeights()
+    // Sync all: bidirectional - download from cloud, merge with local, upload merged
+    suspend fun syncAll(
+        localTodos: List<TodoItem>,
+        localPurchases: List<PurchaseItem>,
+        localWeights: List<WeightRecord>,
+        onProgress: (String) -> Unit = {}
+    ): Triple<List<TodoItem>, List<PurchaseItem>, List<WeightRecord>> {
+        var mergedTodos = localTodos
+        var mergedPurchases = localPurchases
+        var mergedWeights = localWeights
+
+        // Step 1: Download from cloud
+        try {
+            onProgress("正在下载待办...")
+            val cloudTodos = loadTodos()
+            mergedTodos = mergeTodos(localTodos, cloudTodos)
+        } catch (e: Exception) {
+            Log.e("CloudSync", "Sync todos download failed: ${e.message}")
+        }
+
+        try {
+            onProgress("正在下载采购...")
+            val cloudPurchases = loadPurchases()
+            mergedPurchases = mergeById(localPurchases, cloudPurchases)
+        } catch (e: Exception) {
+            Log.e("CloudSync", "Sync purchases download failed: ${e.message}")
+        }
+
+        try {
+            onProgress("正在下载体重...")
+            val cloudWeights = loadWeights()
+            mergedWeights = mergeById(localWeights, cloudWeights)
+        } catch (e: Exception) {
+            Log.e("CloudSync", "Sync weights download failed: ${e.message}")
+        }
+
+        // Step 2: Upload merged data
+        try {
+            onProgress("正在上传待办...")
+            saveTodos(mergedTodos)
+        } catch (e: Exception) {
+            Log.e("CloudSync", "Sync todos upload failed: ${e.message}")
+        }
+
+        try {
+            onProgress("正在上传采购...")
+            savePurchases(mergedPurchases)
+        } catch (e: Exception) {
+            Log.e("CloudSync", "Sync purchases upload failed: ${e.message}")
+        }
+
+        try {
+            onProgress("正在上传体重...")
+            saveWeights(mergedWeights)
+        } catch (e: Exception) {
+            Log.e("CloudSync", "Sync weights upload failed: ${e.message}")
+        }
+
         onProgress("同步完成")
+        return Triple(mergedTodos, mergedPurchases, mergedWeights)
     }
 
     suspend fun uploadAll(
@@ -213,13 +278,73 @@ class CloudSync(private val dataStore: DataStore) {
         weights: List<WeightRecord>,
         onProgress: (String) -> Unit = {}
     ) {
-        onProgress("正在上传待办...")
-        saveTodos(todos)
-        onProgress("正在上传采购...")
-        savePurchases(purchases)
-        onProgress("正在上传体重...")
-        saveWeights(weights)
+        try {
+            onProgress("正在上传待办...")
+            saveTodos(todos)
+        } catch (e: Exception) {
+            Log.e("CloudSync", "Upload todos failed: ${e.message}")
+            onProgress("上传失败")
+            return
+        }
+
+        try {
+            onProgress("正在上传采购...")
+            savePurchases(purchases)
+        } catch (e: Exception) {
+            Log.e("CloudSync", "Upload purchases failed: ${e.message}")
+            onProgress("上传失败")
+            return
+        }
+
+        try {
+            onProgress("正在上传体重...")
+            saveWeights(weights)
+        } catch (e: Exception) {
+            Log.e("CloudSync", "Upload weights failed: ${e.message}")
+            onProgress("上传失败")
+            return
+        }
+
         onProgress("上传完成")
+    }
+
+    // Merge strategies: cloud data takes precedence for matching IDs
+    private fun mergeTodos(local: List<TodoItem>, cloud: List<TodoItem>): List<TodoItem> {
+        val result = local.associateBy { it.id }.toMutableMap()
+        cloud.forEach { item ->
+            if (!result.containsKey(item.id)) {
+                result[item.id] = item
+            }
+        }
+        return result.values.toList()
+    }
+
+    private fun <T> mergeById(local: List<T>, cloud: List<T>): List<T> where T : Any {
+        // Use reflection to get id field
+        val result = mutableListOf<T>()
+        val ids = mutableSetOf<String>()
+        local.forEach { item ->
+            val id = try {
+                val field = item::class.java.getDeclaredField("id")
+                field.isAccessible = true
+                field.get(item) as String
+            } catch (e: Exception) { "" }
+            if (id.isNotBlank()) {
+                ids.add(id)
+                result.add(item)
+            }
+        }
+        cloud.forEach { item ->
+            val id = try {
+                val field = item::class.java.getDeclaredField("id")
+                field.isAccessible = true
+                field.get(item) as String
+            } catch (e: Exception) { "" }
+            if (id.isNotBlank() && !ids.contains(id)) {
+                result.add(item)
+            }
+        }
+        return result
     }
 }
 
