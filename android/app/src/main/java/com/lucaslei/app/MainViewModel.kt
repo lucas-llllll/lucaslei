@@ -26,6 +26,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _weights = MutableStateFlow<List<WeightRecord>>(emptyList())
     val weights: StateFlow<List<WeightRecord>> = _weights.asStateFlow()
 
+    private val _injections = MutableStateFlow<List<WeightInjRecord>>(emptyList())
+    val injections: StateFlow<List<WeightInjRecord>> = _injections.asStateFlow()
+
     private val _syncStatus = MutableStateFlow<Pair<String, String>>("" to "")
     val syncStatus: StateFlow<Pair<String, String>> = _syncStatus.asStateFlow()
 
@@ -44,6 +47,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _recipes.value = dataStore.loadRecipes()
         _purchases.value = dataStore.loadPurchases()
         _weights.value = dataStore.loadWeights()
+        _injections.value = dataStore.loadInjections()
     }
 
     // === Todo ===
@@ -59,11 +63,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _todos.value = list
         dataStore.saveTodos(list)
         viewModelScope.launch {
-            try {
-                cloudSync.uploadTodos(list)
-            } catch (e: Exception) {
-                Log.e("VM", "addTodo sync failed: ${e.message}")
-            }
+            try { cloudSync.uploadTodos(list) } catch (e: Exception) { Log.e("VM", "addTodo sync failed: ${e.message}") }
         }
     }
 
@@ -72,11 +72,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _todos.value = list
         dataStore.saveTodos(list)
         viewModelScope.launch {
-            try {
-                cloudSync.uploadTodos(list)
-            } catch (e: Exception) {
-                Log.e("VM", "toggleTodo sync failed: ${e.message}")
-            }
+            try { cloudSync.uploadTodos(list) } catch (e: Exception) { Log.e("VM", "toggleTodo sync failed: ${e.message}") }
         }
     }
 
@@ -85,11 +81,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _todos.value = list
         dataStore.saveTodos(list)
         viewModelScope.launch {
-            try {
-                cloudSync.uploadTodos(list)
-            } catch (e: Exception) {
-                Log.e("VM", "deleteTodo sync failed: ${e.message}")
-            }
+            try { cloudSync.uploadTodos(list) } catch (e: Exception) { Log.e("VM", "deleteTodo sync failed: ${e.message}") }
         }
     }
 
@@ -117,29 +109,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun addPurchase(name: String, cat: String, brand: String, spec: String, qty: Int, price: Double, channel: String, contact: String, status: String, expectDate: String, budget: String, note: String) {
         val item = PurchaseItem(
             id = "r${System.currentTimeMillis()}",
-            name = name,
-            brand = brand,
-            spec = spec,
-            qty = qty,
-            price = price,
-            channel = channel,
-            contact = contact,
-            status = status,
-            expectDate = expectDate,
-            actualDate = "",
-            cat = cat,
-            budget = budget,
-            note = note
+            name = name, brand = brand, spec = spec, qty = qty, price = price,
+            channel = channel, contact = contact, status = status,
+            expectDate = expectDate, actualDate = "", cat = cat, budget = budget, note = note
         )
         val list = _purchases.value + item
         _purchases.value = list
         dataStore.savePurchases(list)
         viewModelScope.launch {
-            try {
-                cloudSync.uploadPurchases(list)
-            } catch (e: Exception) {
-                Log.e("VM", "addPurchase sync failed: ${e.message}")
-            }
+            try { cloudSync.uploadPurchases(list) } catch (e: Exception) { Log.e("VM", "addPurchase sync failed: ${e.message}") }
         }
     }
 
@@ -148,11 +126,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _purchases.value = list
         dataStore.savePurchases(list)
         viewModelScope.launch {
-            try {
-                cloudSync.uploadPurchases(list)
-            } catch (e: Exception) {
-                Log.e("VM", "updatePurchase sync failed: ${e.message}")
-            }
+            try { cloudSync.uploadPurchases(list) } catch (e: Exception) { Log.e("VM", "updatePurchase sync failed: ${e.message}") }
         }
     }
 
@@ -170,26 +144,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _purchases.value = list
         dataStore.savePurchases(list)
         viewModelScope.launch {
-            try {
-                cloudSync.uploadPurchases(list)
-            } catch (e: Exception) {
-                Log.e("VM", "deletePurchase sync failed: ${e.message}")
-            }
+            try { cloudSync.uploadPurchases(list) } catch (e: Exception) { Log.e("VM", "deletePurchase sync failed: ${e.message}") }
         }
     }
 
     // === Weight ===
-    fun addWeight(weight: String, date: String, note: String) {
-        val item = WeightRecord(id = System.currentTimeMillis().toString(), weight = weight, date = date, note = note)
+    fun addWeight(weight: Double, date: String, note: String) {
+        val item = WeightRecord(id = "w${System.currentTimeMillis()}", weight = weight, date = date, note = note)
         val list = _weights.value + item
         _weights.value = list
         dataStore.saveWeights(list)
         viewModelScope.launch {
-            try {
-                cloudSync.uploadWeights(list)
-            } catch (e: Exception) {
-                Log.e("VM", "addWeight sync failed: ${e.message}")
-            }
+            try { cloudSync.uploadWeights(list) } catch (e: Exception) { Log.e("VM", "addWeight sync failed: ${e.message}") }
         }
     }
 
@@ -198,11 +164,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _weights.value = list
         dataStore.saveWeights(list)
         viewModelScope.launch {
-            try {
-                cloudSync.uploadWeights(list)
-            } catch (e: Exception) {
-                Log.e("VM", "deleteWeight sync failed: ${e.message}")
-            }
+            try { cloudSync.uploadWeights(list) } catch (e: Exception) { Log.e("VM", "deleteWeight sync failed: ${e.message}") }
+        }
+    }
+
+    // === Injection ===
+    fun addInjection(date: String, dose: String, side: String, note: String, seq: Int) {
+        val item = WeightInjRecord(id = "i${System.currentTimeMillis()}", date = date, dose = dose, side = side, note = note, seq = seq)
+        val list = _injections.value + item
+        _injections.value = list
+        dataStore.saveInjections(list)
+        viewModelScope.launch {
+            try { cloudSync.uploadInjections(list) } catch (e: Exception) { Log.e("VM", "addInjection sync failed: ${e.message}") }
+        }
+    }
+
+    fun deleteInjection(id: String) {
+        val list = _injections.value.filter { it.id != id }
+        _injections.value = list
+        dataStore.saveInjections(list)
+        viewModelScope.launch {
+            try { cloudSync.uploadInjections(list) } catch (e: Exception) { Log.e("VM", "deleteInjection sync failed: ${e.message}") }
         }
     }
 
@@ -210,19 +192,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun syncFromCloud() {
         viewModelScope.launch {
             try {
-                val (mergedTodos, mergedPurchases, mergedWeights) = cloudSync.syncAll(
+                val (mergedTodos, mergedPurchases, mergedWeights, mergedInjections) = cloudSync.syncAll(
                     localTodos = _todos.value,
                     localPurchases = _purchases.value,
-                    localWeights = _weights.value
+                    localWeights = _weights.value,
+                    localInjections = _injections.value
                 ) { progress ->
                     _syncProgress.value = progress
                 }
-                _todos.value = mergedTodos
-                dataStore.saveTodos(mergedTodos)
-                _purchases.value = mergedPurchases
-                dataStore.savePurchases(mergedPurchases)
-                _weights.value = mergedWeights
-                dataStore.saveWeights(mergedWeights)
+                _todos.value = mergedTodos; dataStore.saveTodos(mergedTodos)
+                _purchases.value = mergedPurchases; dataStore.savePurchases(mergedPurchases)
+                _weights.value = mergedWeights; dataStore.saveWeights(mergedWeights)
+                _injections.value = mergedInjections; dataStore.saveInjections(mergedInjections)
             } catch (e: Exception) {
                 _syncStatus.value = "err" to "同步失败: ${e.message}"
             } finally {
@@ -237,7 +218,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 cloudSync.uploadAll(
                     todos = _todos.value,
                     purchases = _purchases.value,
-                    weights = _weights.value
+                    weights = _weights.value,
+                    injections = _injections.value
                 ) { progress ->
                     _syncProgress.value = progress
                 }

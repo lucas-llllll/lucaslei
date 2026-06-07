@@ -17,16 +17,14 @@ class CloudSync(private val dataStore: DataStore) {
         syncListener?.invoke(status, text)
     }
 
-    // === 采购同步 (云端: /data/memo) ===
+    // === 采购 (云端: /data/zx) ===
 
     suspend fun loadPurchases(): List<PurchaseItem> {
         return try {
             notify("loading", "加载采购数据")
-            val json = ApiClient.get("/data/memo")
+            val json = ApiClient.get("/data/zx")
             Log.d("CloudSync", "Purchase response: ${json.take(300)}")
-            if (json.isBlank() || json == "[]") {
-                return emptyList()
-            }
+            if (json.isBlank() || json == "[]") return emptyList()
             val type = object : TypeToken<List<PurchaseItem>>() {}.type
             val list: List<PurchaseItem> = gson.fromJson(json, type)
             notify("ok", "已同步 ${list.size} 条采购")
@@ -42,10 +40,17 @@ class CloudSync(private val dataStore: DataStore) {
         }
     }
 
-    suspend fun uploadPurchases(list: List<PurchaseItem>): Boolean {
+    suspend fun uploadPurchases(localList: List<PurchaseItem>): Boolean {
         return try {
             notify("saving", "上传采购数据")
-            ApiClient.put("/data/memo", list)
+            // 先拉云端，合并后再写，防止覆盖
+            val cloudList = try {
+                val json = ApiClient.get("/data/zx")
+                if (json.isBlank() || json == "[]") emptyList()
+                else gson.fromJson(json, object : TypeToken<List<PurchaseItem>>() {}.type)
+            } catch (e: Exception) { emptyList() }
+            val merged = mergeById(localList, cloudList)
+            ApiClient.put("/data/zx", merged)
             notify("ok", "采购数据已同步")
             true
         } catch (e: Exception) {
@@ -55,16 +60,14 @@ class CloudSync(private val dataStore: DataStore) {
         }
     }
 
-    // === 待办同步 (云端: /data/todo) ===
+    // === 待办 (云端: /data/todo) ===
 
     suspend fun loadTodos(): List<TodoItem> {
         return try {
             notify("loading", "加载待办")
             val json = ApiClient.get("/data/todo")
             Log.d("CloudSync", "Todo response: ${json.take(300)}")
-            if (json.isBlank() || json == "[]") {
-                return emptyList()
-            }
+            if (json.isBlank() || json == "[]") return emptyList()
             val type = object : TypeToken<List<TodoItem>>() {}.type
             val list: List<TodoItem> = gson.fromJson(json, type)
             notify("ok", "已同步 ${list.size} 条待办")
@@ -80,10 +83,16 @@ class CloudSync(private val dataStore: DataStore) {
         }
     }
 
-    suspend fun uploadTodos(list: List<TodoItem>): Boolean {
+    suspend fun uploadTodos(localList: List<TodoItem>): Boolean {
         return try {
             notify("saving", "上传待办")
-            ApiClient.put("/data/todo", list)
+            val cloudList = try {
+                val json = ApiClient.get("/data/todo")
+                if (json.isBlank() || json == "[]") emptyList()
+                else gson.fromJson(json, object : TypeToken<List<TodoItem>>() {}.type)
+            } catch (e: Exception) { emptyList() }
+            val merged = mergeById(localList, cloudList)
+            ApiClient.put("/data/todo", merged)
             notify("ok", "待办已同步")
             true
         } catch (e: Exception) {
@@ -93,16 +102,14 @@ class CloudSync(private val dataStore: DataStore) {
         }
     }
 
-    // === 体重同步 (云端: /data/weight) ===
+    // === 体重 (云端: /data/weight_wt) ===
 
     suspend fun loadWeights(): List<WeightRecord> {
         return try {
             notify("loading", "加载体重")
-            val json = ApiClient.get("/data/weight")
+            val json = ApiClient.get("/data/weight_wt")
             Log.d("CloudSync", "Weight response: ${json.take(300)}")
-            if (json.isBlank() || json == "[]") {
-                return emptyList()
-            }
+            if (json.isBlank() || json == "[]") return emptyList()
             val type = object : TypeToken<List<WeightRecord>>() {}.type
             val list: List<WeightRecord> = gson.fromJson(json, type)
             notify("ok", "已同步 ${list.size} 条体重")
@@ -118,10 +125,16 @@ class CloudSync(private val dataStore: DataStore) {
         }
     }
 
-    suspend fun uploadWeights(list: List<WeightRecord>): Boolean {
+    suspend fun uploadWeights(localList: List<WeightRecord>): Boolean {
         return try {
             notify("saving", "上传体重")
-            ApiClient.put("/data/weight", list)
+            val cloudList = try {
+                val json = ApiClient.get("/data/weight_wt")
+                if (json.isBlank() || json == "[]") emptyList()
+                else gson.fromJson(json, object : TypeToken<List<WeightRecord>>() {}.type)
+            } catch (e: Exception) { emptyList() }
+            val merged = mergeById(localList, cloudList)
+            ApiClient.put("/data/weight_wt", merged)
             notify("ok", "体重已同步")
             true
         } catch (e: Exception) {
@@ -131,111 +144,111 @@ class CloudSync(private val dataStore: DataStore) {
         }
     }
 
-    // === 全量同步：先从云端拉取，合并后上传 ===
+    // === 注射 (云端: /data/weight_ij) ===
+
+    suspend fun loadInjections(): List<WeightInjRecord> {
+        return try {
+            notify("loading", "加载注射记录")
+            val json = ApiClient.get("/data/weight_ij")
+            Log.d("CloudSync", "Injection response: ${json.take(300)}")
+            if (json.isBlank() || json == "[]") return emptyList()
+            val type = object : TypeToken<List<WeightInjRecord>>() {}.type
+            val list: List<WeightInjRecord> = gson.fromJson(json, type)
+            notify("ok", "已同步 ${list.size} 条注射记录")
+            list
+        } catch (e: JsonSyntaxException) {
+            Log.e("CloudSync", "Injection parse error", e)
+            notify("err", "数据格式错误")
+            emptyList()
+        } catch (e: Exception) {
+            Log.e("CloudSync", "Injection load error: ${e.message}", e)
+            notify("err", "离线")
+            emptyList()
+        }
+    }
+
+    suspend fun uploadInjections(localList: List<WeightInjRecord>): Boolean {
+        return try {
+            notify("saving", "上传注射记录")
+            val cloudList = try {
+                val json = ApiClient.get("/data/weight_ij")
+                if (json.isBlank() || json == "[]") emptyList()
+                else gson.fromJson(json, object : TypeToken<List<WeightInjRecord>>() {}.type)
+            } catch (e: Exception) { emptyList() }
+            val merged = mergeById(localList, cloudList)
+            ApiClient.put("/data/weight_ij", merged)
+            notify("ok", "注射记录已同步")
+            true
+        } catch (e: Exception) {
+            Log.e("CloudSync", "Injection upload error: ${e.message}", e)
+            notify("err", "上传失败")
+            false
+        }
+    }
+
+    // === 全量同步 ===
 
     suspend fun syncAll(
         localTodos: List<TodoItem>,
         localPurchases: List<PurchaseItem>,
         localWeights: List<WeightRecord>,
+        localInjections: List<WeightInjRecord>,
         onProgress: (String) -> Unit = {}
-    ): Triple<List<TodoItem>, List<PurchaseItem>, List<WeightRecord>> {
+    ): Quadruple<List<TodoItem>, List<PurchaseItem>, List<WeightRecord>, List<WeightInjRecord>> {
 
         var mergedPurchases = localPurchases
         var mergedTodos = localTodos
         var mergedWeights = localWeights
+        var mergedInjections = localInjections
 
-        // Step 1: Download
+        // Download all
         try {
             onProgress("正在下载采购数据...")
             val cloudPurchases = loadPurchases()
-            if (cloudPurchases.isNotEmpty()) {
-                mergedPurchases = mergeById(localPurchases, cloudPurchases)
-            }
-        } catch (e: Exception) {
-            Log.e("CloudSync", "Sync purchases download failed: ${e.message}")
-        }
+            if (cloudPurchases.isNotEmpty()) mergedPurchases = mergeById(localPurchases, cloudPurchases)
+        } catch (e: Exception) { Log.e("CloudSync", "Sync purchases download failed: ${e.message}") }
 
         try {
             onProgress("正在下载待办...")
             val cloudTodos = loadTodos()
-            if (cloudTodos.isNotEmpty()) {
-                mergedTodos = mergeById(localTodos, cloudTodos)
-            }
-        } catch (e: Exception) {
-            Log.e("CloudSync", "Sync todos download failed: ${e.message}")
-        }
+            if (cloudTodos.isNotEmpty()) mergedTodos = mergeById(localTodos, cloudTodos)
+        } catch (e: Exception) { Log.e("CloudSync", "Sync todos download failed: ${e.message}") }
 
         try {
             onProgress("正在下载体重...")
             val cloudWeights = loadWeights()
-            if (cloudWeights.isNotEmpty()) {
-                mergedWeights = mergeById(localWeights, cloudWeights)
-            }
-        } catch (e: Exception) {
-            Log.e("CloudSync", "Sync weights download failed: ${e.message}")
-        }
-
-        // Step 2: Upload merged
-        try {
-            onProgress("正在上传采购数据...")
-            uploadPurchases(mergedPurchases)
-        } catch (e: Exception) {
-            Log.e("CloudSync", "Sync purchases upload failed: ${e.message}")
-        }
+            if (cloudWeights.isNotEmpty()) mergedWeights = mergeById(localWeights, cloudWeights)
+        } catch (e: Exception) { Log.e("CloudSync", "Sync weights download failed: ${e.message}") }
 
         try {
-            onProgress("正在上传待办...")
-            uploadTodos(mergedTodos)
-        } catch (e: Exception) {
-            Log.e("CloudSync", "Sync todos upload failed: ${e.message}")
-        }
+            onProgress("正在下载注射记录...")
+            val cloudInjections = loadInjections()
+            if (cloudInjections.isNotEmpty()) mergedInjections = mergeById(localInjections, cloudInjections)
+        } catch (e: Exception) { Log.e("CloudSync", "Sync injections download failed: ${e.message}") }
 
-        try {
-            onProgress("正在上传体重...")
-            uploadWeights(mergedWeights)
-        } catch (e: Exception) {
-            Log.e("CloudSync", "Sync weights upload failed: ${e.message}")
-        }
+        // Upload merged
+        try { onProgress("正在上传采购数据..."); uploadPurchases(mergedPurchases) } catch (e: Exception) { Log.e("CloudSync", "Sync purchases upload failed: ${e.message}") }
+        try { onProgress("正在上传待办..."); uploadTodos(mergedTodos) } catch (e: Exception) { Log.e("CloudSync", "Sync todos upload failed: ${e.message}") }
+        try { onProgress("正在上传体重..."); uploadWeights(mergedWeights) } catch (e: Exception) { Log.e("CloudSync", "Sync weights upload failed: ${e.message}") }
+        try { onProgress("正在上传注射记录..."); uploadInjections(mergedInjections) } catch (e: Exception) { Log.e("CloudSync", "Sync injections upload failed: ${e.message}") }
 
         onProgress("同步完成")
-        return Triple(mergedTodos, mergedPurchases, mergedWeights)
+        return Quadruple(mergedTodos, mergedPurchases, mergedWeights, mergedInjections)
     }
 
-    // === 全量上传（覆盖云端） ===
+    // === 全量上传 ===
 
     suspend fun uploadAll(
         todos: List<TodoItem>,
         purchases: List<PurchaseItem>,
         weights: List<WeightRecord>,
+        injections: List<WeightInjRecord>,
         onProgress: (String) -> Unit = {}
     ) {
-        try {
-            onProgress("正在上传采购...")
-            uploadPurchases(purchases)
-        } catch (e: Exception) {
-            Log.e("CloudSync", "Upload purchases failed: ${e.message}")
-            onProgress("上传失败")
-            return
-        }
-
-        try {
-            onProgress("正在上传待办...")
-            uploadTodos(todos)
-        } catch (e: Exception) {
-            Log.e("CloudSync", "Upload todos failed: ${e.message}")
-            onProgress("上传失败")
-            return
-        }
-
-        try {
-            onProgress("正在上传体重...")
-            uploadWeights(weights)
-        } catch (e: Exception) {
-            Log.e("CloudSync", "Upload weights failed: ${e.message}")
-            onProgress("上传失败")
-            return
-        }
-
+        try { onProgress("正在上传采购..."); uploadPurchases(purchases) } catch (e: Exception) { onProgress("上传失败"); return }
+        try { onProgress("正在上传待办..."); uploadTodos(todos) } catch (e: Exception) { onProgress("上传失败"); return }
+        try { onProgress("正在上传体重..."); uploadWeights(weights) } catch (e: Exception) { onProgress("上传失败"); return }
+        try { onProgress("正在上传注射记录..."); uploadInjections(injections) } catch (e: Exception) { onProgress("上传失败"); return }
         onProgress("上传完成")
     }
 
@@ -248,10 +261,8 @@ class CloudSync(private val dataStore: DataStore) {
         }
         cloud.forEach { item ->
             val id = getId(item)
-            if (id.isNotBlank()) {
-                if (!result.containsKey(id)) {
-                    result[id] = item
-                }
+            if (id.isNotBlank() && !result.containsKey(id)) {
+                result[id] = item
             }
         }
         return result.values.toList()
@@ -266,3 +277,5 @@ class CloudSync(private val dataStore: DataStore) {
         } catch (e: Exception) { "" }
     }
 }
+
+data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
