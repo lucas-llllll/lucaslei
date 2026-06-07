@@ -261,8 +261,8 @@ class CloudSync(private val dataStore: DataStore) {
         }
         cloud.forEach { item ->
             val id = getId(item)
-            if (id.isNotBlank() && !result.containsKey(id)) {
-                result[id] = item
+            if (id.isNotBlank()) {
+                result[id] = item  // cloud wins
             }
         }
         return result.values.toList()

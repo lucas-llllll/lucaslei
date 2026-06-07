@@ -121,8 +121,8 @@ fun PurchaseScreen(vm: MainViewModel) {
                                     style = MaterialTheme.typography.titleSmall,
                                     textDecoration = if (item.status == "已退换") TextDecoration.LineThrough else TextDecoration.None
                                 )
-                                if (item.spec.isNotBlank()) {
-                                    Text(text = item.spec, style = MaterialTheme.typography.bodySmall,
+                                if (!item.spec.isNullOrBlank()) {
+                                    Text(text = item.spec!!, style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.outline)
                                 }
                                 Row {
@@ -130,9 +130,9 @@ fun PurchaseScreen(vm: MainViewModel) {
                                         Text(text = item.cat, style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.primary)
                                     }
-                                    if (item.brand.isNotBlank()) {
+                                    if (!item.brand.isNullOrBlank()) {
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Text(text = item.brand, style = MaterialTheme.typography.bodySmall,
+                                        Text(text = item.brand!!, style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.tertiary)
                                     }
                                     if (item.price > 0) {
@@ -302,20 +302,20 @@ fun PurchaseDetailDialog(item: PurchaseItem, onDismiss: () -> Unit) {
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (item.cat.isNotBlank()) Text("分类: ${item.cat}")
-                if (item.brand.isNotBlank()) Text("品牌: ${item.brand}")
-                if (item.spec.isNotBlank()) Text("规格: ${item.spec}")
+                if (!item.brand.isNullOrBlank()) Text("品牌: ${item.brand}")
+                if (!item.spec.isNullOrBlank()) Text("规格: ${item.spec}")
                 if (item.qty > 0) {
                     val qtyStr = if (item.qty == item.qty.toInt().toDouble()) item.qty.toInt().toString() else item.qty.toString()
                     Text("数量: $qtyStr")
                 }
                 if (item.price > 0) Text("单价: ¥${item.price}")
-                if (item.channel.isNotBlank()) Text("渠道: ${item.channel}")
-                if (item.contact.isNotBlank()) Text("联系方式: ${item.contact}")
+                if (!item.channel.isNullOrBlank()) Text("渠道: ${item.channel}")
+                if (!item.contact.isNullOrBlank()) Text("联系方式: ${item.contact}")
                 Text("状态: ${item.status}")
-                if (item.expectDate.isNotBlank()) Text("期望日期: ${item.expectDate}")
-                if (item.actualDate.isNotBlank()) Text("实际日期: ${item.actualDate}")
-                if (item.budget.isNotBlank()) Text("预算: ¥${item.budget}")
-                if (item.note.isNotBlank()) Text("备注: ${item.note}")
+                if (!item.expectDate.isNullOrBlank()) Text("期望日期: ${item.expectDate}")
+                if (!item.actualDate.isNullOrBlank()) Text("实际日期: ${item.actualDate}")
+                if (!item.budget.isNullOrBlank()) Text("预算: ¥${item.budget}")
+                if (!item.note.isNullOrBlank()) Text("备注: ${item.note}")
             }
         },
         confirmButton = {

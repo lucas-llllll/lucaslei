@@ -179,6 +179,11 @@ fun InjectionTab(vm: MainViewModel, injections: List<WeightInjRecord>, showAdd: 
                                     Text(if (record.side == "左") "← 左" else "右 →",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = if (record.side == "左") Color(0xFF2196F3) else Color(0xFFE91E63))
+                                    if (record.dose != null && record.dose != "") {
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("剂量: ${record.dose}", style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.outline)
+                                    }
                                 }
                                 if (record.note.isNotBlank()) {
                                     Text(record.note, style = MaterialTheme.typography.bodySmall,
