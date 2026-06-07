@@ -119,8 +119,8 @@ fun WeightTab(vm: MainViewModel, weights: List<WeightRecord>, showAdd: Boolean, 
                             Text("${record.weight} kg", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
                             Column(horizontalAlignment = Alignment.End) {
                                 Text(record.date, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
-                                if (record.note.isNotBlank()) {
-                                    Text(record.note, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+                                if (!record.note.isNullOrBlank()) {
+                                    Text(record.note!!, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
                                 }
                             }
                             Spacer(modifier = Modifier.width(8.dp))
@@ -185,8 +185,8 @@ fun InjectionTab(vm: MainViewModel, injections: List<WeightInjRecord>, showAdd: 
                                             color = MaterialTheme.colorScheme.outline)
                                     }
                                 }
-                                if (record.note.isNotBlank()) {
-                                    Text(record.note, style = MaterialTheme.typography.bodySmall,
+                                if (!record.note.isNullOrBlank()) {
+                                    Text(record.note!!, style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.outline)
                                 }
                             }
