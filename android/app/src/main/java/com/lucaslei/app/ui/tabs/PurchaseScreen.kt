@@ -142,7 +142,8 @@ fun PurchaseScreen(vm: MainViewModel) {
                                     }
                                     if (item.qty > 0) {
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Text(text = "x${item.qty}", style = MaterialTheme.typography.bodySmall)
+                                        val qtyStr = if (item.qty == item.qty.toInt().toDouble()) item.qty.toInt().toString() else item.qty.toString()
+                                        Text(text = "x$qtyStr", style = MaterialTheme.typography.bodySmall)
                                     }
                                 }
                             }
@@ -188,7 +189,7 @@ fun PurchaseScreen(vm: MainViewModel) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddPurchaseDialog(onDismiss: () -> Unit, onAdd: (String, String, String, String, Int, Double, String, String, String, String, String, String) -> Unit) {
+fun AddPurchaseDialog(onDismiss: () -> Unit, onAdd: (String, String, String, String, Double, Double, String, String, String, String, String, String) -> Unit) {
     var name by remember { mutableStateOf("") }
     var cat by remember { mutableStateOf("水电") }
     var brand by remember { mutableStateOf("") }
@@ -281,7 +282,7 @@ fun AddPurchaseDialog(onDismiss: () -> Unit, onAdd: (String, String, String, Str
             TextButton(onClick = {
                 if (name.isNotBlank()) {
                     onAdd(name.trim(), cat, brand.trim(), spec.trim(),
-                        qty.toIntOrNull() ?: 0, price.toDoubleOrNull() ?: 0.0,
+                        qty.toDoubleOrNull() ?: 0.0, price.toDoubleOrNull() ?: 0.0,
                         channel.trim(), contact.trim(), status, expectDate.trim(), budget.trim(), note.trim())
                 }
             }) { Text("添加") }
@@ -303,7 +304,10 @@ fun PurchaseDetailDialog(item: PurchaseItem, onDismiss: () -> Unit) {
                 if (item.cat.isNotBlank()) Text("分类: ${item.cat}")
                 if (item.brand.isNotBlank()) Text("品牌: ${item.brand}")
                 if (item.spec.isNotBlank()) Text("规格: ${item.spec}")
-                if (item.qty > 0) Text("数量: ${item.qty}")
+                if (item.qty > 0) {
+                    val qtyStr = if (item.qty == item.qty.toInt().toDouble()) item.qty.toInt().toString() else item.qty.toString()
+                    Text("数量: $qtyStr")
+                }
                 if (item.price > 0) Text("单价: ¥${item.price}")
                 if (item.channel.isNotBlank()) Text("渠道: ${item.channel}")
                 if (item.contact.isNotBlank()) Text("联系方式: ${item.contact}")

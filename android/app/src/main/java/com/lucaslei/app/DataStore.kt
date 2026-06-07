@@ -12,7 +12,7 @@ data class PurchaseItem(
     val name: String = "",
     val brand: String = "",
     val spec: String = "",
-    val qty: Int = 0,
+    val qty: Double = 0.0,
     val price: Double = 0.0,
     val channel: String = "",
     val contact: String = "",

@@ -40,6 +40,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         cloudSync.setListener { status, text ->
             _syncStatus.value = status to text
         }
+        // 启动时自动从云端拉取数据
+        syncFromCloud()
     }
 
     fun loadAll() {
@@ -106,7 +108,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // === Purchase ===
-    fun addPurchase(name: String, cat: String, brand: String, spec: String, qty: Int, price: Double, channel: String, contact: String, status: String, expectDate: String, budget: String, note: String) {
+    fun addPurchase(name: String, cat: String, brand: String, spec: String, qty: Double, price: Double, channel: String, contact: String, status: String, expectDate: String, budget: String, note: String) {
         val item = PurchaseItem(
             id = "r${System.currentTimeMillis()}",
             name = name, brand = brand, spec = spec, qty = qty, price = price,
