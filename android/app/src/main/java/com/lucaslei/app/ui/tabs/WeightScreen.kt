@@ -204,6 +204,7 @@ fun InjectionTab(vm: MainViewModel, injections: List<WeightInjRecord>, showAdd: 
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddWeightDialog(onDismiss: () -> Unit, onAdd: (Double, String, String) -> Unit) {
     var weight by remember { mutableStateOf("") }
@@ -246,6 +247,7 @@ fun AddWeightDialog(onDismiss: () -> Unit, onAdd: (Double, String, String) -> Un
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddInjectionDialog(onDismiss: () -> Unit, onAdd: (String, String, String, String, Int) -> Unit) {
     var date by remember { mutableStateOf("") }
