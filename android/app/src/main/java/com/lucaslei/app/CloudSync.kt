@@ -24,7 +24,7 @@ class CloudSync(private val dataStore: DataStore) {
             notify("loading", "加载采购数据")
             val json = ApiClient.get("/data/zx")
             Log.d("CloudSync", "Purchase response: ${json.take(300)}")
-            if (json.isBlank() || json == "[]") return emptyList()
+            if (json.isBlank() || json == "[]") return emptyList<PurchaseItem>()
             val type = object : TypeToken<List<PurchaseItem>>() {}.type
             val list: List<PurchaseItem> = gson.fromJson(json, type)
             notify("ok", "已同步 ${list.size} 条采购")
@@ -32,11 +32,11 @@ class CloudSync(private val dataStore: DataStore) {
         } catch (e: JsonSyntaxException) {
             Log.e("CloudSync", "Purchase parse error", e)
             notify("err", "数据格式错误")
-            emptyList()
+            emptyList<PurchaseItem>()
         } catch (e: Exception) {
             Log.e("CloudSync", "Purchase load error: ${e.message}", e)
             notify("err", "离线")
-            emptyList()
+            emptyList<PurchaseItem>()
         }
     }
 
@@ -46,9 +46,9 @@ class CloudSync(private val dataStore: DataStore) {
             // 先拉云端，合并后再写，防止覆盖
             val cloudList = try {
                 val json = ApiClient.get("/data/zx")
-                if (json.isBlank() || json == "[]") emptyList()
+                if (json.isBlank() || json == "[]") emptyList<PurchaseItem>()
                 else gson.fromJson(json, object : TypeToken<List<PurchaseItem>>() {}.type)
-            } catch (e: Exception) { emptyList() }
+            } catch (e: Exception) { emptyList<PurchaseItem>() }
             val merged = mergeById(localList, cloudList)
             ApiClient.put("/data/zx", merged)
             notify("ok", "采购数据已同步")
@@ -67,7 +67,7 @@ class CloudSync(private val dataStore: DataStore) {
             notify("loading", "加载待办")
             val json = ApiClient.get("/data/todo")
             Log.d("CloudSync", "Todo response: ${json.take(300)}")
-            if (json.isBlank() || json == "[]") return emptyList()
+            if (json.isBlank() || json == "[]") return emptyList<TodoItem>()
             val type = object : TypeToken<List<TodoItem>>() {}.type
             val list: List<TodoItem> = gson.fromJson(json, type)
             notify("ok", "已同步 ${list.size} 条待办")
@@ -75,11 +75,11 @@ class CloudSync(private val dataStore: DataStore) {
         } catch (e: JsonSyntaxException) {
             Log.e("CloudSync", "Todo parse error", e)
             notify("err", "数据格式错误")
-            emptyList()
+            emptyList<TodoItem>()
         } catch (e: Exception) {
             Log.e("CloudSync", "Todo load error: ${e.message}", e)
             notify("err", "离线")
-            emptyList()
+            emptyList<TodoItem>()
         }
     }
 
@@ -88,9 +88,9 @@ class CloudSync(private val dataStore: DataStore) {
             notify("saving", "上传待办")
             val cloudList = try {
                 val json = ApiClient.get("/data/todo")
-                if (json.isBlank() || json == "[]") emptyList()
+                if (json.isBlank() || json == "[]") emptyList<TodoItem>()
                 else gson.fromJson(json, object : TypeToken<List<TodoItem>>() {}.type)
-            } catch (e: Exception) { emptyList() }
+            } catch (e: Exception) { emptyList<TodoItem>() }
             val merged = mergeById(localList, cloudList)
             ApiClient.put("/data/todo", merged)
             notify("ok", "待办已同步")
@@ -109,7 +109,7 @@ class CloudSync(private val dataStore: DataStore) {
             notify("loading", "加载体重")
             val json = ApiClient.get("/data/weight_wt")
             Log.d("CloudSync", "Weight response: ${json.take(300)}")
-            if (json.isBlank() || json == "[]") return emptyList()
+            if (json.isBlank() || json == "[]") return emptyList<WeightRecord>()
             val type = object : TypeToken<List<WeightRecord>>() {}.type
             val list: List<WeightRecord> = gson.fromJson(json, type)
             notify("ok", "已同步 ${list.size} 条体重")
@@ -117,11 +117,11 @@ class CloudSync(private val dataStore: DataStore) {
         } catch (e: JsonSyntaxException) {
             Log.e("CloudSync", "Weight parse error", e)
             notify("err", "数据格式错误")
-            emptyList()
+            emptyList<WeightRecord>()
         } catch (e: Exception) {
             Log.e("CloudSync", "Weight load error: ${e.message}", e)
             notify("err", "离线")
-            emptyList()
+            emptyList<WeightRecord>()
         }
     }
 
@@ -130,9 +130,9 @@ class CloudSync(private val dataStore: DataStore) {
             notify("saving", "上传体重")
             val cloudList = try {
                 val json = ApiClient.get("/data/weight_wt")
-                if (json.isBlank() || json == "[]") emptyList()
+                if (json.isBlank() || json == "[]") emptyList<WeightRecord>()
                 else gson.fromJson(json, object : TypeToken<List<WeightRecord>>() {}.type)
-            } catch (e: Exception) { emptyList() }
+            } catch (e: Exception) { emptyList<WeightRecord>() }
             val merged = mergeById(localList, cloudList)
             ApiClient.put("/data/weight_wt", merged)
             notify("ok", "体重已同步")
@@ -151,7 +151,7 @@ class CloudSync(private val dataStore: DataStore) {
             notify("loading", "加载注射记录")
             val json = ApiClient.get("/data/weight_ij")
             Log.d("CloudSync", "Injection response: ${json.take(300)}")
-            if (json.isBlank() || json == "[]") return emptyList()
+            if (json.isBlank() || json == "[]") return emptyList<WeightInjRecord>()
             val type = object : TypeToken<List<WeightInjRecord>>() {}.type
             val list: List<WeightInjRecord> = gson.fromJson(json, type)
             notify("ok", "已同步 ${list.size} 条注射记录")
@@ -159,11 +159,11 @@ class CloudSync(private val dataStore: DataStore) {
         } catch (e: JsonSyntaxException) {
             Log.e("CloudSync", "Injection parse error", e)
             notify("err", "数据格式错误")
-            emptyList()
+            emptyList<WeightInjRecord>()
         } catch (e: Exception) {
             Log.e("CloudSync", "Injection load error: ${e.message}", e)
             notify("err", "离线")
-            emptyList()
+            emptyList<WeightInjRecord>()
         }
     }
 
@@ -172,9 +172,9 @@ class CloudSync(private val dataStore: DataStore) {
             notify("saving", "上传注射记录")
             val cloudList = try {
                 val json = ApiClient.get("/data/weight_ij")
-                if (json.isBlank() || json == "[]") emptyList()
+                if (json.isBlank() || json == "[]") emptyList<WeightInjRecord>()
                 else gson.fromJson(json, object : TypeToken<List<WeightInjRecord>>() {}.type)
-            } catch (e: Exception) { emptyList() }
+            } catch (e: Exception) { emptyList<WeightInjRecord>() }
             val merged = mergeById(localList, cloudList)
             ApiClient.put("/data/weight_ij", merged)
             notify("ok", "注射记录已同步")
