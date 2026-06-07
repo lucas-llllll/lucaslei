@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -21,6 +22,15 @@ fun TodoScreen(vm: MainViewModel) {
     val todos by vm.todos.collectAsState()
     var showAdd by remember { mutableStateOf(false) }
     var inputText by remember { mutableStateOf("") }
+    var inputDeadline by remember { mutableStateOf("") }
+    var inputPriority by remember { mutableStateOf("medium") }
+
+    val priorityColors = mapOf(
+        "high" to Color.Red,
+        "medium" to Color(0xFFFF9800),
+        "low" to Color(0xFF4CAF50)
+    )
+    val priorityLabels = mapOf("high" to "高", "medium" to "中", "low" to "低")
 
     Column(modifier = Modifier.fillMaxSize()) {
         SmallTopAppBar(
@@ -66,15 +76,33 @@ fun TodoScreen(vm: MainViewModel) {
                                 onCheckedChange = { vm.toggleTodo(item.id) }
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = item.text,
-                                modifier = Modifier.weight(1f),
-                                style = MaterialTheme.typography.bodyLarge,
-                                textDecoration = if (item.done) TextDecoration.LineThrough else TextDecoration.None,
-                                color = if (item.done) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = item.text,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    textDecoration = if (item.done) TextDecoration.LineThrough else TextDecoration.None,
+                                    color = if (item.done) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    // 优先级标签
+                                    val pColor = priorityColors[item.priority] ?: Color.Gray
+                                    Text(
+                                        text = priorityLabels[item.priority] ?: "中",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = pColor
+                                    )
+                                    if (item.deadline.isNotBlank()) {
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = "截止: ${item.deadline}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = if (item.deadline.isNotEmpty() && !item.done) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline
+                                        )
+                                    }
+                                }
+                            }
                             IconButton(onClick = { vm.deleteTodo(item.id) }) {
                                 Icon(Icons.Filled.Delete, contentDescription = "删除",
                                     tint = MaterialTheme.colorScheme.error)
@@ -96,28 +124,56 @@ fun TodoScreen(vm: MainViewModel) {
 
     if (showAdd) {
         AlertDialog(
-            onDismissRequest = { showAdd = false; inputText = "" },
+            onDismissRequest = { showAdd = false; inputText = ""; inputDeadline = ""; inputPriority = "medium" },
             title = { Text("添加待办") },
             text = {
-                OutlinedTextField(
-                    value = inputText,
-                    onValueChange = { inputText = it },
-                    label = { Text("待办内容") },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 2
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = inputText,
+                        onValueChange = { inputText = it },
+                        label = { Text("待办内容") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 2
+                    )
+                    OutlinedTextField(
+                        value = inputDeadline,
+                        onValueChange = { inputDeadline = it },
+                        label = { Text("截止日期 (可选)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        placeholder = { Text("YYYY-MM-DD") }
+                    )
+                    // 优先级选择
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        listOf("low" to "低", "medium" to "中", "high" to "高").forEach { (value, label) ->
+                            FilterChip(
+                                selected = inputPriority == value,
+                                onClick = { inputPriority = value },
+                                label = { Text(label) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = (priorityColors[value] ?: Color.Gray).copy(alpha = 0.2f)
+                                )
+                            )
+                        }
+                    }
+                }
             },
             confirmButton = {
                 TextButton(onClick = {
                     if (inputText.isNotBlank()) {
-                        vm.addTodo(inputText.trim())
+                        vm.addTodo(inputText.trim(), inputDeadline.trim(), inputPriority)
                         inputText = ""
+                        inputDeadline = ""
+                        inputPriority = "medium"
                         showAdd = false
                     }
                 }) { Text("添加") }
             },
             dismissButton = {
-                TextButton(onClick = { showAdd = false; inputText = "" }) { Text("取消") }
+                TextButton(onClick = { showAdd = false; inputText = ""; inputDeadline = ""; inputPriority = "medium" }) { Text("取消") }
             }
         )
     }

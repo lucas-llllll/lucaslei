@@ -1,6 +1,7 @@
 package com.lucaslei.app
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -46,29 +47,53 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // === Todo ===
-    fun addTodo(text: String) {
-        val item = TodoItem(id = System.currentTimeMillis().toString(), text = text)
+    fun addTodo(text: String, deadline: String = "", priority: String = "medium") {
+        val item = TodoItem(
+            id = "tmp${System.currentTimeMillis()}",
+            text = text,
+            deadline = deadline,
+            priority = priority,
+            createdAt = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US).format(java.util.Date())
+        )
         val list = _todos.value + item
         _todos.value = list
         dataStore.saveTodos(list)
-        viewModelScope.launch { cloudSync.saveTodos(list) }
+        viewModelScope.launch {
+            try {
+                cloudSync.uploadTodos(list)
+            } catch (e: Exception) {
+                Log.e("VM", "addTodo sync failed: ${e.message}")
+            }
+        }
     }
 
     fun toggleTodo(id: String) {
         val list = _todos.value.map { if (it.id == id) it.copy(done = !it.done) else it }
         _todos.value = list
         dataStore.saveTodos(list)
-        viewModelScope.launch { cloudSync.saveTodos(list) }
+        viewModelScope.launch {
+            try {
+                cloudSync.uploadTodos(list)
+            } catch (e: Exception) {
+                Log.e("VM", "toggleTodo sync failed: ${e.message}")
+            }
+        }
     }
 
     fun deleteTodo(id: String) {
         val list = _todos.value.filter { it.id != id }
         _todos.value = list
         dataStore.saveTodos(list)
-        viewModelScope.launch { cloudSync.saveTodos(list) }
+        viewModelScope.launch {
+            try {
+                cloudSync.uploadTodos(list)
+            } catch (e: Exception) {
+                Log.e("VM", "deleteTodo sync failed: ${e.message}")
+            }
+        }
     }
 
-    // === Recipe ===
+    // === Recipe (纯本地) ===
     fun addRecipe(name: String, category: String, ingredients: String, steps: String) {
         val item = Recipe(id = System.currentTimeMillis().toString(), name = name, category = category, ingredients = ingredients, steps = steps)
         val list = _recipes.value + item
@@ -89,26 +114,68 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // === Purchase ===
-    fun addPurchase(name: String, category: String, spec: String, price: String, note: String) {
-        val item = PurchaseItem(id = System.currentTimeMillis().toString(), name = name, category = category, spec = spec, price = price, note = note)
+    fun addPurchase(name: String, cat: String, brand: String, spec: String, qty: Int, price: Double, channel: String, contact: String, status: String, expectDate: String, budget: String, note: String) {
+        val item = PurchaseItem(
+            id = "r${System.currentTimeMillis()}",
+            name = name,
+            brand = brand,
+            spec = spec,
+            qty = qty,
+            price = price,
+            channel = channel,
+            contact = contact,
+            status = status,
+            expectDate = expectDate,
+            actualDate = "",
+            cat = cat,
+            budget = budget,
+            note = note
+        )
         val list = _purchases.value + item
         _purchases.value = list
         dataStore.savePurchases(list)
-        viewModelScope.launch { cloudSync.savePurchases(list) }
+        viewModelScope.launch {
+            try {
+                cloudSync.uploadPurchases(list)
+            } catch (e: Exception) {
+                Log.e("VM", "addPurchase sync failed: ${e.message}")
+            }
+        }
     }
 
-    fun togglePurchaseBought(id: String) {
-        val list = _purchases.value.map { if (it.id == id) it.copy(bought = !it.bought) else it }
+    fun updatePurchase(id: String, update: (PurchaseItem) -> PurchaseItem) {
+        val list = _purchases.value.map { if (it.id == id) update(it) else it }
         _purchases.value = list
         dataStore.savePurchases(list)
-        viewModelScope.launch { cloudSync.savePurchases(list) }
+        viewModelScope.launch {
+            try {
+                cloudSync.uploadPurchases(list)
+            } catch (e: Exception) {
+                Log.e("VM", "updatePurchase sync failed: ${e.message}")
+            }
+        }
+    }
+
+    fun togglePurchaseStatus(id: String) {
+        val statusOrder = listOf("待下单", "已下单", "已到货", "已安装")
+        updatePurchase(id) { item ->
+            val currentIdx = statusOrder.indexOf(item.status)
+            val nextStatus = if (currentIdx < statusOrder.size - 1) statusOrder[currentIdx + 1] else statusOrder[0]
+            item.copy(status = nextStatus)
+        }
     }
 
     fun deletePurchase(id: String) {
         val list = _purchases.value.filter { it.id != id }
         _purchases.value = list
         dataStore.savePurchases(list)
-        viewModelScope.launch { cloudSync.savePurchases(list) }
+        viewModelScope.launch {
+            try {
+                cloudSync.uploadPurchases(list)
+            } catch (e: Exception) {
+                Log.e("VM", "deletePurchase sync failed: ${e.message}")
+            }
+        }
     }
 
     // === Weight ===
@@ -117,14 +184,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val list = _weights.value + item
         _weights.value = list
         dataStore.saveWeights(list)
-        viewModelScope.launch { cloudSync.saveWeights(list) }
+        viewModelScope.launch {
+            try {
+                cloudSync.uploadWeights(list)
+            } catch (e: Exception) {
+                Log.e("VM", "addWeight sync failed: ${e.message}")
+            }
+        }
     }
 
     fun deleteWeight(id: String) {
         val list = _weights.value.filter { it.id != id }
         _weights.value = list
         dataStore.saveWeights(list)
-        viewModelScope.launch { cloudSync.saveWeights(list) }
+        viewModelScope.launch {
+            try {
+                cloudSync.uploadWeights(list)
+            } catch (e: Exception) {
+                Log.e("VM", "deleteWeight sync failed: ${e.message}")
+            }
+        }
     }
 
     // === Cloud Sync ===
