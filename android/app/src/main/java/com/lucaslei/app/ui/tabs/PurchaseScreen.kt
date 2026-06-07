@@ -186,6 +186,7 @@ fun PurchaseScreen(vm: MainViewModel) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddPurchaseDialog(onDismiss: () -> Unit, onAdd: (String, String, String, String, Int, Double, String, String, String, String, String, String) -> Unit) {
     var name by remember { mutableStateOf("") }
@@ -291,6 +292,7 @@ fun AddPurchaseDialog(onDismiss: () -> Unit, onAdd: (String, String, String, Str
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PurchaseDetailDialog(item: PurchaseItem, onDismiss: () -> Unit) {
     AlertDialog(

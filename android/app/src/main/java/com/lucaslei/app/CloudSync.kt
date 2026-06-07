@@ -240,7 +240,7 @@ class CloudSync(private val dataStore: DataStore) {
     }
 
     // === Merge: cloud wins for same ID ===
-    private fun <T> mergeById(local: List<T>, cloud: List<T>): List<T> {
+    private fun <T : Any> mergeById(local: List<T>, cloud: List<T>): List<T> {
         val result = mutableMapOf<String, T>()
         local.forEach { item ->
             val id = getId(item)
@@ -252,17 +252,17 @@ class CloudSync(private val dataStore: DataStore) {
                 if (!result.containsKey(id)) {
                     result[id] = item
                 }
-                // local已有的保留local版本
             }
         }
         return result.values.toList()
     }
 
-    private fun getId(item: Any): String {
+    private fun <T : Any> getId(item: T): String {
         return try {
             val field = item::class.java.getDeclaredField("id")
             field.isAccessible = true
-            (field.get(item) as? String) ?: ""
+            val value = field.get(item)
+            value?.toString() ?: ""
         } catch (e: Exception) { "" }
     }
 }
