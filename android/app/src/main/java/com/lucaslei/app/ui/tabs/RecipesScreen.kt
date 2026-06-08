@@ -66,7 +66,7 @@ fun RecipesScreen(vm: MainViewModel) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(text = recipe.name, style = MaterialTheme.typography.titleMedium)
                                 if (!recipe.category.isNullOrBlank()) {
-                                    Text(text = recipe.category!!, style = MaterialTheme.typography.bodySmall,
+                                    Text(text = recipe.category ?: "", style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.primary)
                                 }
                             }
@@ -138,18 +138,18 @@ fun RecipesScreen(vm: MainViewModel) {
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (!recipe.category.isNullOrBlank()) {
-                        Text("分类: ${recipe.category!!}", style = MaterialTheme.typography.bodyMedium,
+                        Text("分类: ${recipe.category ?: ""}", style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.primary)
                     }
                     if (!recipe.ingredients.isNullOrBlank()) {
                         Divider()
                         Text("食材", style = MaterialTheme.typography.titleSmall)
-                        Text(recipe.ingredients!!, style = MaterialTheme.typography.bodyMedium)
+                        Text(recipe.ingredients ?: "", style = MaterialTheme.typography.bodyMedium)
                     }
                     if (!recipe.steps.isNullOrBlank()) {
                         Divider()
                         Text("步骤", style = MaterialTheme.typography.titleSmall)
-                        Text(recipe.steps!!, style = MaterialTheme.typography.bodyMedium)
+                        Text(recipe.steps ?: "", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             },
