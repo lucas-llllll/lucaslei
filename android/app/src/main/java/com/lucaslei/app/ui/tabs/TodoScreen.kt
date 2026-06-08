@@ -93,12 +93,12 @@ fun TodoScreen(vm: MainViewModel) {
                                         style = MaterialTheme.typography.labelSmall,
                                         color = pColor
                                     )
-                                    if (!item.deadline.isNullOrBlank()) {
+                                    if (item.deadline?.isNotBlank() == true) {
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(
                                             text = "截止: ${item.deadline}",
                                             style = MaterialTheme.typography.labelSmall,
-                                            color = if (!item.deadline.isNullOrEmpty() && !item.done) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline
+                                            color = if (item.deadline?.isNotEmpty() == true && !item.done) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline
                                         )
                                     }
                                 }
