@@ -33,10 +33,10 @@ fun PurchaseScreen(vm: MainViewModel) {
     var selectedStatus by remember { mutableStateOf("全部") }
 
     val filtered = purchases
-        .filter { selectedCategory == "全部" || it.cat == selectedCategory }
-        .filter { selectedStatus == "全部" || it.status == selectedStatus }
+            .filter { selectedCategory == "全部" || it.cat == selectedCategory }
+        .filter { selectedStatus == "全部" || (it.status ?: "") == selectedStatus }
 
-    val statusCounts = purchases.groupBy { it.status }.mapValues { it.value.size }
+    val statusCounts = purchases.groupBy { it.status ?: "待下单" }.mapValues { it.value.size }
 
     Column(modifier = Modifier.fillMaxSize()) {
         SmallTopAppBar(
@@ -105,7 +105,7 @@ fun PurchaseScreen(vm: MainViewModel) {
                 contentPadding = PaddingValues(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(filtered, key = { it.id }) { item ->
+                items(filtered, key = { it.id ?: "" }) { item ->
                     Card(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -116,23 +116,23 @@ fun PurchaseScreen(vm: MainViewModel) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = item.name,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    textDecoration = if (item.status == "已退换") TextDecoration.LineThrough else TextDecoration.None
-                                )
+                                    Text(
+                                        text = item.name ?: "",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        textDecoration = if ((item.status ?: "") == "已退换") TextDecoration.LineThrough else TextDecoration.None
+                                    )
                                 if (!item.spec.isNullOrBlank()) {
-                                    Text(text = item.spec!!, style = MaterialTheme.typography.bodySmall,
+                                    Text(text = item.spec ?: "", style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.outline)
                                 }
                                 Row {
-                                    if (item.cat.isNotBlank()) {
-                                        Text(text = item.cat, style = MaterialTheme.typography.bodySmall,
+                                    if (!item.cat.isNullOrBlank()) {
+                                        Text(text = item.cat ?: "", style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.primary)
                                     }
                                     if (!item.brand.isNullOrBlank()) {
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Text(text = item.brand!!, style = MaterialTheme.typography.bodySmall,
+                                        Text(text = item.brand ?: "", style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.tertiary)
                                     }
                                     if (item.price > 0) {
@@ -147,14 +147,13 @@ fun PurchaseScreen(vm: MainViewModel) {
                                     }
                                 }
                             }
-                            // 状态标签
                             FilterChip(
                                 selected = false,
-                                onClick = { vm.togglePurchaseStatus(item.id) },
-                                label = { Text(item.status, style = MaterialTheme.typography.labelSmall) },
+                                onClick = { vm.togglePurchaseStatus(item.id ?: "") },
+                                label = { Text(item.status ?: "待下单", style = MaterialTheme.typography.labelSmall) },
                                 modifier = Modifier.padding(start = 4.dp)
                             )
-                            IconButton(onClick = { vm.deletePurchase(item.id) }) {
+                            IconButton(onClick = { vm.deletePurchase(item.id ?: "") }) {
                                 Icon(Icons.Filled.Delete, contentDescription = "删除",
                                     tint = MaterialTheme.colorScheme.error)
                             }
@@ -298,24 +297,24 @@ fun AddPurchaseDialog(onDismiss: () -> Unit, onAdd: (String, String, String, Str
 fun PurchaseDetailDialog(item: PurchaseItem, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(item.name) },
+        title = { Text(item.name ?: "") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (item.cat.isNotBlank()) Text("分类: ${item.cat}")
-                if (!item.brand.isNullOrBlank()) Text("品牌: ${item.brand}")
-                if (!item.spec.isNullOrBlank()) Text("规格: ${item.spec}")
+                if (!item.cat.isNullOrBlank()) Text("分类: ${item.cat ?: ""}")
+                if (!item.brand.isNullOrBlank()) Text("品牌: ${item.brand ?: ""}")
+                if (!item.spec.isNullOrBlank()) Text("规格: ${item.spec ?: ""}")
                 if (item.qty > 0) {
                     val qtyStr = if (item.qty == item.qty.toInt().toDouble()) item.qty.toInt().toString() else item.qty.toString()
                     Text("数量: $qtyStr")
                 }
                 if (item.price > 0) Text("单价: ¥${item.price}")
-                if (!item.channel.isNullOrBlank()) Text("渠道: ${item.channel}")
-                if (!item.contact.isNullOrBlank()) Text("联系方式: ${item.contact}")
-                Text("状态: ${item.status}")
-                if (!item.expectDate.isNullOrBlank()) Text("期望日期: ${item.expectDate}")
-                if (!item.actualDate.isNullOrBlank()) Text("实际日期: ${item.actualDate}")
-                if (!item.budget.isNullOrBlank()) Text("预算: ¥${item.budget}")
-                if (!item.note.isNullOrBlank()) Text("备注: ${item.note}")
+                if (!item.channel.isNullOrBlank()) Text("渠道: ${item.channel ?: ""}")
+                if (!item.contact.isNullOrBlank()) Text("联系方式: ${item.contact ?: ""}")
+                Text("状态: ${item.status ?: "待下单"}")
+                if (!item.expectDate.isNullOrBlank()) Text("期望日期: ${item.expectDate ?: ""}")
+                if (!item.actualDate.isNullOrBlank()) Text("实际日期: ${item.actualDate ?: ""}")
+                if (!item.budget.isNullOrBlank()) Text("预算: ¥${item.budget ?: ""}")
+                if (!item.note.isNullOrBlank()) Text("备注: ${item.note ?: ""}")
             }
         },
         confirmButton = {

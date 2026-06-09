@@ -54,7 +54,7 @@ fun RecipesScreen(vm: MainViewModel) {
                 contentPadding = PaddingValues(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(recipes, key = { it.id }) { recipe ->
+                items(recipes, key = { it.id ?: "" }) { recipe ->
                     Card(
                         modifier = Modifier.fillMaxWidth().clickable { showDetail = recipe },
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -64,20 +64,20 @@ fun RecipesScreen(vm: MainViewModel) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(text = recipe.name, style = MaterialTheme.typography.titleMedium)
+                                Text(text = recipe.name ?: "", style = MaterialTheme.typography.titleMedium)
                                 if (!recipe.category.isNullOrBlank()) {
                                     Text(text = recipe.category ?: "", style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.primary)
                                 }
                             }
-                            IconButton(onClick = { vm.toggleRecipeFavorite(recipe.id) }) {
+                            IconButton(onClick = { vm.toggleRecipeFavorite(recipe.id ?: "") }) {
                                 Icon(
                                     if (recipe.favorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
                                     contentDescription = "收藏",
                                     tint = if (recipe.favorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline
                                 )
                             }
-                            IconButton(onClick = { vm.deleteRecipe(recipe.id) }) {
+                            IconButton(onClick = { vm.deleteRecipe(recipe.id ?: "") }) {
                                 Icon(Icons.Filled.Delete, contentDescription = "删除",
                                     tint = MaterialTheme.colorScheme.error)
                             }
@@ -134,7 +134,7 @@ fun RecipesScreen(vm: MainViewModel) {
     showDetail?.let { recipe ->
         AlertDialog(
             onDismissRequest = { showDetail = null },
-            title = { Text(recipe.name) },
+            title = { Text(recipe.name ?: "") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (!recipe.category.isNullOrBlank()) {

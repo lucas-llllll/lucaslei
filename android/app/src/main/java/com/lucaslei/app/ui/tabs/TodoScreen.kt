@@ -62,7 +62,7 @@ fun TodoScreen(vm: MainViewModel) {
                 contentPadding = PaddingValues(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(todos, key = { it.id }) { item ->
+                items(todos, key = { it.id ?: "" }) { item ->
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -73,12 +73,12 @@ fun TodoScreen(vm: MainViewModel) {
                         ) {
                             Checkbox(
                                 checked = item.done,
-                                onCheckedChange = { vm.toggleTodo(item.id) }
+                                onCheckedChange = { vm.toggleTodo(item.id ?: "") }
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = item.text,
+                                    text = item.text ?: "",
                                     style = MaterialTheme.typography.bodyLarge,
                                     textDecoration = if (item.done) TextDecoration.LineThrough else TextDecoration.None,
                                     color = if (item.done) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface,
@@ -86,10 +86,10 @@ fun TodoScreen(vm: MainViewModel) {
                                     overflow = TextOverflow.Ellipsis
                                 )
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    // 优先级标签
-                                    val pColor = priorityColors[item.priority] ?: Color.Gray
+                                    val pKey = item.priority ?: "medium"
+                                    val pColor = priorityColors[pKey] ?: Color.Gray
                                     Text(
-                                        text = priorityLabels[item.priority] ?: "中",
+                                        text = priorityLabels[pKey] ?: "中",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = pColor
                                     )
@@ -103,7 +103,7 @@ fun TodoScreen(vm: MainViewModel) {
                                     }
                                 }
                             }
-                            IconButton(onClick = { vm.deleteTodo(item.id) }) {
+                            IconButton(onClick = { vm.deleteTodo(item.id ?: "") }) {
                                 Icon(Icons.Filled.Delete, contentDescription = "删除",
                                     tint = MaterialTheme.colorScheme.error)
                             }

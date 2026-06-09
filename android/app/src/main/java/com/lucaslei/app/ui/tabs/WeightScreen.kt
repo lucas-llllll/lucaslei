@@ -70,7 +70,7 @@ fun WeightScreen(vm: MainViewModel) {
 fun WeightTab(vm: MainViewModel, weights: List<WeightRecord>, showAdd: Boolean, onShowAdd: (Boolean) -> Unit) {
     Column(modifier = Modifier.fillMaxSize()) {
         if (weights.isNotEmpty()) {
-            val latest = weights.maxByOrNull { it.date }
+            val latest = weights.maxByOrNull { it.date ?: "" }
             Card(
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp).fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
@@ -107,7 +107,7 @@ fun WeightTab(vm: MainViewModel, weights: List<WeightRecord>, showAdd: Boolean, 
                 contentPadding = PaddingValues(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(weights.sortedByDescending { it.date }, key = { it.id }) { record ->
+                items(weights.sortedByDescending { it.date ?: "" }, key = { it.id ?: "" }) { record ->
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -118,13 +118,13 @@ fun WeightTab(vm: MainViewModel, weights: List<WeightRecord>, showAdd: Boolean, 
                         ) {
                             Text("${record.weight} kg", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
                             Column(horizontalAlignment = Alignment.End) {
-                                Text(record.date, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+                                Text(record.date ?: "", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
                                 if (!record.note.isNullOrBlank()) {
                                     Text(record.note ?: "", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
                                 }
                             }
                             Spacer(modifier = Modifier.width(8.dp))
-                            IconButton(onClick = { vm.deleteWeight(record.id) }) {
+                            IconButton(onClick = { vm.deleteWeight(record.id ?: "") }) {
                                 Icon(Icons.Filled.Delete, contentDescription = "删除", tint = MaterialTheme.colorScheme.error)
                             }
                         }
@@ -161,7 +161,7 @@ fun InjectionTab(vm: MainViewModel, injections: List<WeightInjRecord>, showAdd: 
                 contentPadding = PaddingValues(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(injections.sortedByDescending { it.seq }, key = { it.id }) { record ->
+                items(injections.sortedByDescending { it.seq }, key = { it.id ?: "" }) { record ->
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -174,11 +174,11 @@ fun InjectionTab(vm: MainViewModel, injections: List<WeightInjRecord>, showAdd: 
                                 color = MaterialTheme.colorScheme.primary, modifier = Modifier.width(36.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Row {
-                                    Text(record.date, style = MaterialTheme.typography.bodyMedium)
+                                    Text(record.date ?: "", style = MaterialTheme.typography.bodyMedium)
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text(if (record.side == "左") "← 左" else "右 →",
+                                    Text(if ((record.side ?: "") == "左") "← 左" else "右 →",
                                         style = MaterialTheme.typography.bodyMedium,
-                                        color = if (record.side == "左") Color(0xFF2196F3) else Color(0xFFE91E63))
+                                        color = if ((record.side ?: "") == "左") Color(0xFF2196F3) else Color(0xFFE91E63))
                                     if (record.dose != null && record.dose != "") {
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text("剂量: ${record.dose}", style = MaterialTheme.typography.bodySmall,
@@ -190,7 +190,7 @@ fun InjectionTab(vm: MainViewModel, injections: List<WeightInjRecord>, showAdd: 
                                         color = MaterialTheme.colorScheme.outline)
                                 }
                             }
-                            IconButton(onClick = { vm.deleteInjection(record.id) }) {
+                            IconButton(onClick = { vm.deleteInjection(record.id ?: "") }) {
                                 Icon(Icons.Filled.Delete, contentDescription = "删除", tint = MaterialTheme.colorScheme.error)
                             }
                         }

@@ -10,54 +10,59 @@ import com.google.gson.reflect.TypeToken
 // 所有可能缺失的 String 字段用 String? 防止 Gson 反序列化 NPE
 
 data class PurchaseItem(
-    val id: String = "",
-    val name: String = "",
+    val id: String? = null,
+    val name: String? = null,
     val brand: String? = null,
     val spec: String? = null,
     val qty: Double = 0.0,
     val price: Double = 0.0,
     val channel: String? = null,
     val contact: String? = null,
-    val status: String = "待下单",
+    val status: String? = null,
     val expectDate: String? = null,
     val actualDate: String? = null,
-    val cat: String = "",
+    val cat: String? = null,
     val budget: String? = null,
-    val note: String? = null
+    val note: String? = null,
+    val updatedAt: String? = null
 )
 
 data class TodoItem(
-    val id: String = "",
-    val text: String = "",
+    val id: String? = null,
+    val text: String? = null,
     val deadline: String? = null,
     val done: Boolean = false,
-    val priority: String = "medium",
-    val createdAt: String = ""
+    val priority: String? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null
 )
 
 data class WeightRecord(
-    val id: String = "",
+    val id: String? = null,
     val weight: Double = 0.0,
-    val date: String = "",
-    val note: String? = null
+    val date: String? = null,
+    val note: String? = null,
+    val updatedAt: String? = null
 )
 
 data class WeightInjRecord(
-    val id: String = "",
-    val date: String = "",
+    val id: String? = null,
+    val date: String? = null,
     val dose: Any? = null,     // 云端: 0.5(number) 或 ""(string)
-    val side: String = "左",
+    val side: String? = null,
     val note: String? = null,
-    val seq: Int = 0
+    val seq: Int = 0,
+    val updatedAt: String? = null
 )
 
 data class Recipe(
-    val id: String = "",
-    val name: String = "",
+    val id: String? = null,
+    val name: String? = null,
     val category: String? = null,
     val ingredients: String? = null,
     val steps: String? = null,
-    val favorite: Boolean = false
+    val favorite: Boolean = false,
+    val updatedAt: String? = null
 )
 
 // === 本地存储 ===
