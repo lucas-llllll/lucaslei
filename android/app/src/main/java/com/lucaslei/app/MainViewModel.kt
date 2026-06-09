@@ -36,11 +36,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val syncProgress: StateFlow<String> = _syncProgress.asStateFlow()
 
     init {
-        loadAll()
+        try { loadAll() } catch (e: Exception) {
+            Log.e("MainVM", "loadAll failed: ${e.message}", e)
+        }
         cloudSync.setListener { status, text ->
             _syncStatus.value = status to text
         }
-        // 启动时自动从云端拉取数据
         syncFromCloud()
     }
 
