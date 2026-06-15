@@ -90,13 +90,24 @@ class CloudSync(private val dataStore: DataStore) {
             val json = ApiClient.get("/data/tododata")
             Log.d("CloudSync", "Tododata response: ${json.take(300)}")
             if (json.isBlank() || json == "[]" || json == "{}") return emptyList<TodoItem>()
-            val type = object : TypeToken<Map<String, Map<String, List<TodoItem>>>>() {}.type
-            val groups: Map<String, Map<String, List<TodoItem>>> = gson.fromJson(json, type)
+            // 先用原始 Map 解析，因为 note 里 id 可能是数字或字符串
+            val rawType = object : TypeToken<Map<String, Map<String, List<Map<String, Any?>>>>>() {}.type
+            val groups: Map<String, Map<String, List<Map<String, Any?>>>> = gson.fromJson(json, rawType)
             val allNotes = mutableListOf<TodoItem>()
             groups.values.forEach { category ->
-                category["note"]?.let { notes ->
-                    // Gson 可能把 note 里的 number id 解析为 Double，需要容错
-                    allNotes.addAll(notes.filterNotNull())
+                category["note"]?.forEach { raw ->
+                    val id = raw["id"]?.toString() ?: ""
+                    val text = raw["text"]?.toString() ?: ""
+                    val deadline = raw["deadline"]?.toString() ?: ""
+                    val done = raw["done"]?.let {
+                        when (it) { is Boolean -> it; is String -> it.toBoolean(); is Number -> it.toDouble() != 0.0; else -> false }
+                    } ?: false
+                    val priority = raw["priority"]?.toString() ?: "medium"
+                    val createdAt = raw["createdAt"]?.toString() ?: ""
+                    if (text.isNotBlank() || id.isNotBlank()) {
+                        allNotes.add(TodoItem(id = id, text = text, deadline = deadline,
+                            done = done, priority = priority, createdAt = createdAt))
+                    }
                 }
             }
             Log.d("CloudSync", "Tododata: ${groups.size} groups, ${allNotes.size} notes")
