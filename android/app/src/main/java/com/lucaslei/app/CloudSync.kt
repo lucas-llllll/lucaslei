@@ -60,12 +60,12 @@ class CloudSync(private val dataStore: DataStore) {
         }
     }
 
-    // === 待办 (云端: /data/todo) ===
+    // === 待办 (云端: /data/tododata) ===
 
     suspend fun loadTodos(): List<TodoItem> {
         return try {
             notify("loading", "加载待办")
-            val json = ApiClient.get("/data/todo")
+            val json = ApiClient.get("/data/tododata")
             Log.d("CloudSync", "Todo response: ${json.take(300)}")
             if (json.isBlank() || json == "[]") return emptyList<TodoItem>()
             val type = object : TypeToken<List<TodoItem>>() {}.type
@@ -87,12 +87,12 @@ class CloudSync(private val dataStore: DataStore) {
         return try {
             notify("saving", "上传待办")
             val cloudList = try {
-                val json = ApiClient.get("/data/todo")
+                val json = ApiClient.get("/data/tododata")
                 if (json.isBlank() || json == "[]") emptyList<TodoItem>()
                 else gson.fromJson(json, object : TypeToken<List<TodoItem>>() {}.type)
             } catch (e: Exception) { emptyList<TodoItem>() }
             val merged = mergeById(localList, cloudList)
-            ApiClient.put("/data/todo", merged)
+            ApiClient.put("/data/tododata", merged)
             notify("ok", "待办已同步")
             true
         } catch (e: Exception) {
