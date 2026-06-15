@@ -60,12 +60,12 @@ class CloudSync(private val dataStore: DataStore) {
         }
     }
 
-    // === 待办 (云端: /data/tododata) ===
+    // === 待办 (云端: /data/todo) ===
 
     suspend fun loadTodos(): List<TodoItem> {
         return try {
             notify("loading", "加载待办")
-            val json = ApiClient.get("/data/tododata")
+            val json = ApiClient.get("/data/todo")
             Log.d("CloudSync", "Todo response: ${json.take(300)}")
             if (json.isBlank() || json == "[]") return emptyList<TodoItem>()
             val type = object : TypeToken<List<TodoItem>>() {}.type
@@ -83,16 +83,40 @@ class CloudSync(private val dataStore: DataStore) {
         }
     }
 
+    // === 从 /data/tododata 嵌套格式提取待办（只读，不上传） ===
+
+    suspend fun loadTodosFromTododata(): List<TodoItem> {
+        return try {
+            val json = ApiClient.get("/data/tododata")
+            Log.d("CloudSync", "Tododata response: ${json.take(300)}")
+            if (json.isBlank() || json == "[]" || json == "{}") return emptyList<TodoItem>()
+            val type = object : TypeToken<Map<String, Map<String, List<TodoItem>>>>() {}.type
+            val groups: Map<String, Map<String, List<TodoItem>>> = gson.fromJson(json, type)
+            val allNotes = mutableListOf<TodoItem>()
+            groups.values.forEach { category ->
+                category["note"]?.let { notes ->
+                    // Gson 可能把 note 里的 number id 解析为 Double，需要容错
+                    allNotes.addAll(notes.filterNotNull())
+                }
+            }
+            Log.d("CloudSync", "Tododata: ${groups.size} groups, ${allNotes.size} notes")
+            allNotes
+        } catch (e: Exception) {
+            Log.e("CloudSync", "Tododata parse error: ${e.message}", e)
+            emptyList<TodoItem>()
+        }
+    }
+
     suspend fun uploadTodos(localList: List<TodoItem>): Boolean {
         return try {
             notify("saving", "上传待办")
             val cloudList = try {
-                val json = ApiClient.get("/data/tododata")
+                val json = ApiClient.get("/data/todo")
                 if (json.isBlank() || json == "[]") emptyList<TodoItem>()
                 else gson.fromJson(json, object : TypeToken<List<TodoItem>>() {}.type)
             } catch (e: Exception) { emptyList<TodoItem>() }
             val merged = mergeById(localList, cloudList)
-            ApiClient.put("/data/tododata", merged)
+            ApiClient.put("/data/todo", merged)
             notify("ok", "待办已同步")
             true
         } catch (e: Exception) {
@@ -213,6 +237,14 @@ class CloudSync(private val dataStore: DataStore) {
             val cloudTodos = loadTodos()
             if (cloudTodos.isNotEmpty()) mergedTodos = mergeById(localTodos, cloudTodos)
         } catch (e: Exception) { Log.e("CloudSync", "Sync todos download failed: ${e.message}") }
+
+        // 额外从 /data/tododata 读取（嵌套格式，只读不写）
+        try {
+            val tododataTodos = loadTodosFromTododata()
+            if (tododataTodos.isNotEmpty()) {
+                mergedTodos = mergeById(mergedTodos, tododataTodos)
+            }
+        } catch (e: Exception) { Log.e("CloudSync", "Tododata sync failed: ${e.message}") }
 
         try {
             onProgress("正在下载体重...")
